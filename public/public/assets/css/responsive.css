@@ -1,0 +1,559 @@
+/* ============================================================
+   FILE: public/assets/css/responsive.css
+   PURPOSE: All responsive breakpoints
+   ============================================================ */
+
+/* ============================================
+   MEDIA QUERY GUIDE
+   ============================================
+
+   Mobile First Approach - Base styles are for mobile,
+   then we add styles for larger screens using min-width.
+   
+   Breakpoints:
+   - Mobile: 0 - 479px
+   - Large Mobile: 480 - 767px
+   - Tablet: 768 - 1023px
+   - Desktop: 1024 - 1279px
+   - Large Desktop: 1280px+
+   
+   ============================================ */
+
+/* ============================================
+   1. LARGE MOBILE (480px - 767px)
+   ============================================ */
+
+@media (min-width: 480px) {
+    /* Adjust container padding */
+    .container {
+        padding: 0 1.5rem;
+    }
+    
+    /* Products grid - 2 columns */
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+}
+
+/* ============================================
+   2. TABLET (768px - 1023px)
+   ============================================ */
+
+@media (min-width: 768px) {
+    /* ============================================
+       HEADER
+       ============================================ */
+    
+    /* Show logo text */
+    .logo .logo-text {
+        display: inline-block;
+    }
+    
+    /* Search bar full width */
+    .search-bar {
+        flex: 1;
+        max-width: 500px;
+    }
+    
+    /* Show button text */
+    .header-actions .btn .btn-text {
+        display: inline-block;
+    }
+    
+    /* Hide mobile menu toggle */
+    .mobile-menu-toggle {
+        display: none;
+    }
+    
+    /* Show navbar */
+    .navbar {
+        display: block !important;
+    }
+    
+    /* ============================================
+       PRODUCTS
+       ============================================ */
+    
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+    
+    /* ============================================
+       SECTION HEADERS
+       ============================================ */
+    
+    .section-header h2 {
+        font-size: var(--text-4xl);
+    }
+    
+    /* ============================================
+       FOOTER
+       ============================================ */
+    
+    .footer-grid {
+        grid-template-columns: 2fr 1fr 1fr 1.5fr;
+        gap: 2rem;
+    }
+}
+
+/* ============================================
+   3. DESKTOP (1024px - 1279px)
+   ============================================ */
+
+@media (min-width: 1024px) {
+    /* ============================================
+       PRODUCTS
+       ============================================ */
+    
+    .products-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+    
+    /* ============================================
+       HERO SECTION
+       ============================================ */
+    
+    .hero-content {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-12);
+    }
+    
+    .hero-title {
+        font-size: var(--text-5xl);
+    }
+    
+    /* ============================================
+       FOOTER
+       ============================================ */
+    
+    .footer-grid {
+        grid-template-columns: 2fr 1fr 1fr 1.5fr;
+        gap: var(--spacing-8);
+    }
+}
+
+/* ============================================
+   4. LARGE DESKTOP (1280px+)
+   ============================================ */
+
+@media (min-width: 1280px) {
+    /* ============================================
+       PRODUCTS
+       ============================================ */
+    
+    .products-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2rem;
+    }
+    
+    /* ============================================
+       CONTAINER
+       ============================================ */
+    
+    .container {
+        padding: 0 2rem;
+    }
+}
+
+/* ============================================
+   5. MOBILE FIRST - OVERRIDES FOR SMALL SCREENS
+   ============================================ */
+
+/* ============================================
+   5.1 MOBILE (0 - 479px)
+   ============================================ */
+
+@media (max-width: 479px) {
+    /* Container */
+    .container {
+        padding: 0 1rem;
+    }
+    
+    /* ============================================
+       HEADER
+       ============================================ */
+    
+    .header-inner {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.75rem 0;
+    }
+    
+    /* Logo */
+    .logo a {
+        font-size: var(--text-lg);
+    }
+    
+    .logo img {
+        height: 32px;
+    }
+    
+    /* Hide logo text on very small screens */
+    .logo .logo-text {
+        display: none;
+    }
+    
+    /* Search bar - full width on next line */
+    .search-bar {
+        order: 3;
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    /* Header actions - compact */
+    .header-actions {
+        gap: 0.25rem;
+    }
+    
+    .header-actions .btn {
+        padding: 0.4rem 0.6rem;
+        font-size: var(--text-xs);
+        min-height: 32px;
+    }
+    
+    .header-actions .btn .btn-text {
+        display: none;
+    }
+    
+    .cart-icon {
+        width: 38px;
+        height: 38px;
+        font-size: var(--text-base);
+    }
+    
+    /* Mobile menu - show */
+    .mobile-menu-toggle {
+        display: flex;
+    }
+    
+    /* Navbar - hidden by default, shown on toggle */
+    .navbar {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--white);
+        box-shadow: var(--shadow-lg);
+        z-index: 999;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .navbar.active {
+        display: block;
+        animation: slideDown 0.3s ease;
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .nav-menu {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0.5rem;
+    }
+    
+    .nav-menu li a {
+        color: var(--dark-gray);
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-sm);
+    }
+    
+    .nav-menu li a:hover,
+    .nav-menu li a.active {
+        background: var(--light-gray);
+        color: var(--primary);
+    }
+    
+    .nav-menu li a.active::after {
+        display: none;
+    }
+    
+    /* ============================================
+       PRODUCTS
+       ============================================ */
+    
+    .products-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+    
+    .product-card {
+        border-radius: var(--radius-md);
+    }
+    
+    .product-name {
+        font-size: var(--text-sm);
+    }
+    
+    .product-description {
+        display: none;
+    }
+    
+    .current-price {
+        font-size: var(--text-base);
+    }
+    
+    .product-card .btn {
+        font-size: var(--text-xs);
+        padding: 0.4rem 0.75rem;
+        min-height: 32px;
+    }
+    
+    .badge {
+        font-size: 0.6rem;
+        padding: 0.1rem 0.5rem;
+        top: 0.5rem;
+        left: 0.5rem;
+    }
+    
+    .product-actions button {
+        width: 32px;
+        height: 32px;
+        font-size: var(--text-sm);
+    }
+    
+    /* ============================================
+       SECTION HEADERS
+       ============================================ */
+    
+    .section-header h2 {
+        font-size: var(--text-2xl);
+    }
+    
+    .section-header p {
+        font-size: var(--text-sm);
+    }
+    
+    /* ============================================
+       FOOTER
+       ============================================ */
+    
+    .footer {
+        padding: var(--spacing-8) 0 0;
+    }
+    
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-6);
+    }
+    
+    .footer-description {
+        max-width: 100%;
+    }
+    
+    .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--spacing-3);
+    }
+    
+    .footer-bottom .payment-methods {
+        justify-content: center;
+    }
+}
+
+/* ============================================
+   5.2 TABLET (480px - 767px) OVERRIDES
+   ============================================ */
+
+@media (min-width: 480px) and (max-width: 767px) {
+    /* Products grid - 2 columns */
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    /* Show logo text on tablets */
+    .logo .logo-text {
+        display: inline-block;
+    }
+    
+    /* Show button text on tablets */
+    .header-actions .btn .btn-text {
+        display: inline-block;
+    }
+    
+    /* Mobile menu still visible on small tablets */
+    .mobile-menu-toggle {
+        display: flex;
+    }
+    
+    .navbar {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--white);
+        box-shadow: var(--shadow-lg);
+        z-index: 999;
+    }
+    
+    .navbar.active {
+        display: block;
+    }
+    
+    .nav-menu {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0.5rem;
+    }
+    
+    .nav-menu li a {
+        color: var(--dark-gray);
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-sm);
+    }
+    
+    .nav-menu li a.active::after {
+        display: none;
+    }
+    
+    /* Footer */
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-6);
+    }
+}
+
+/* ============================================
+   5.3 MOBILE (0 - 767px) - HEADER FIXES
+   ============================================ */
+
+@media (max-width: 767px) {
+    /* Header - fix search bar on mobile */
+    .search-bar {
+        min-width: 100px;
+    }
+    
+    .search-bar input {
+        min-width: 60px;
+        padding: 0.5rem 0.75rem;
+        font-size: var(--text-sm);
+    }
+    
+    /* User dropdown - full width on mobile */
+    .user-dropdown {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        max-height: 60vh;
+        overflow-y: auto;
+        transform: translateY(100%);
+    }
+    
+    .user-menu.active .user-dropdown {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    /* Overlay for mobile dropdown */
+    .dropdown-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 998;
+    }
+    
+    .dropdown-overlay.active {
+        display: block;
+    }
+}
+
+/* ============================================
+   6. UTILITY CLASSES FOR RESPONSIVE
+   ============================================ */
+
+/* Hide on mobile */
+.hide-mobile {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .hide-mobile {
+        display: block;
+    }
+}
+
+/* Hide on tablet */
+.hide-tablet {
+    display: block;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .hide-tablet {
+        display: none;
+    }
+}
+
+/* Hide on desktop */
+.hide-desktop {
+    display: block;
+}
+
+@media (min-width: 1024px) {
+    .hide-desktop {
+        display: none;
+    }
+}
+
+/* Show on mobile only */
+.show-mobile-only {
+    display: block;
+}
+
+@media (min-width: 768px) {
+    .show-mobile-only {
+        display: none;
+    }
+}
+
+/* ============================================
+   7. ANIMATIONS
+   ============================================ */
+
+/* Fade in animation for products */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.product-card {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+.product-card:nth-child(1) { animation-delay: 0.05s; }
+.product-card:nth-child(2) { animation-delay: 0.1s; }
+.product-card:nth-child(3) { animation-delay: 0.15s; }
+.product-card:nth-child(4) { animation-delay: 0.2s; }
+.product-card:nth-child(5) { animation-delay: 0.25s; }
+.product-card:nth-child(6) { animation-delay: 0.3s; }
+.product-card:nth-child(7) { animation-delay: 0.35s; }
+.product-card:nth-child(8) { animation-delay: 0.4s; }

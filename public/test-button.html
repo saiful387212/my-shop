@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Add to Cart Button</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: Arial; padding: 40px; background: #f5f5f5; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
+        .btn { padding: 12px 24px; background: #2C3E8F; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .btn:hover { background: #1a2a6c; }
+        .result { margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Add to Cart Button</h1>
+        
+        <button class="btn add-to-cart" 
+                data-id="99" 
+                data-name="Test Product" 
+                data-price="19.99">
+            <i class="fas fa-cart-plus"></i> Add to Cart
+        </button>
+        
+        <div id="result" class="result">Click the button to test</div>
+        
+        <div style="margin-top:20px;">
+            <a href="cart.php">View Cart</a> | 
+            <a href="products.php">Products Page</a>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const result = document.getElementById('result');
+            
+            document.querySelector('.add-to-cart').addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const productId = this.getAttribute('data-id');
+                const productName = this.getAttribute('data-name');
+                const productPrice = this.getAttribute('data-price');
+                
+                result.innerHTML = '🔄 Adding product...';
+                
+                fetch('cart.php?action=add&id=' + productId + 
+                      '&name=' + encodeURIComponent(productName) + 
+                      '&price=' + productPrice + 
+                      '&ajax=1')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            result.innerHTML = '✅ <span class="success">Added to cart! Cart now has ' + data.cart_count + ' items</span>';
+                        } else {
+                            result.innerHTML = '❌ <span class="error">Failed to add to cart</span>';
+                        }
+                    })
+                    .catch(error => {
+                        result.innerHTML = '❌ <span class="error">Error: ' + error + '</span>';
+                    });
+            });
+        });
+    </script>
+</body>
+</html>

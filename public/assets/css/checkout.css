@@ -1,0 +1,413 @@
+/* ============================================================
+   FILE: public/assets/css/checkout.css
+   PURPOSE: Checkout page styles
+   ============================================================ */
+
+/* ============================================
+   CHECKOUT PAGE
+   ============================================ */
+
+.checkout-page {
+    padding: 60px 0;
+    background: #f8fafc;
+    min-height: calc(100vh - 200px);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.page-header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #1a1a2e;
+    font-family: 'Inter', sans-serif;
+}
+
+.page-header h1::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background: #2C3E8F;
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
+
+.page-header p {
+    color: #6c757d;
+    font-size: 16px;
+    margin-top: 8px;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ============================================
+   ALERT MESSAGES
+   ============================================ */
+
+.alert {
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+}
+
+.alert-danger {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.alert i {
+    font-size: 20px;
+}
+
+/* ============================================
+   CHECKOUT CONTAINER
+   ============================================ */
+
+.checkout-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+/* ============================================
+   CHECKOUT FORM
+   ============================================ */
+
+.checkout-form-wrapper {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #eef2f7;
+}
+
+.checkout-form h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+    font-family: 'Inter', sans-serif;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a1a2e;
+    margin-bottom: 6px;
+    font-family: 'Inter', sans-serif;
+}
+
+.form-group label .required {
+    color: #e74c3c;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s ease;
+    background: #f8fafc;
+    box-sizing: border-box;
+    color: #1a1a2e;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #2C3E8F;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(44, 62, 143, 0.1);
+}
+
+.form-control.is-invalid {
+    border-color: #e74c3c;
+    background: #fff5f5;
+}
+
+.form-control.is-valid {
+    border-color: #27ae60;
+    background: #f0fff4;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.error-message {
+    color: #e74c3c;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ============================================
+   SUBMIT BUTTON
+   ============================================ */
+
+.btn-place-order {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 8px;
+    border-radius: 10px;
+    background: #2C3E8F;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.btn-place-order:hover {
+    background: #1a2a6c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(44, 62, 143, 0.3);
+}
+
+.btn-place-order:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-place-order.loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn-place-order.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.secure-notice {
+    text-align: center;
+    font-size: 13px;
+    color: #6c757d;
+    margin-top: 12px;
+    font-family: 'Inter', sans-serif;
+}
+
+.secure-notice i {
+    color: #27ae60;
+}
+
+/* ============================================
+   ORDER SUMMARY
+   ============================================ */
+
+.order-summary {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #eef2f7;
+    height: fit-content;
+    position: sticky;
+    top: 100px;
+}
+
+.order-summary h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+    font-family: 'Inter', sans-serif;
+}
+
+.summary-items {
+    margin-bottom: 16px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.summary-item .item-info {
+    display: flex;
+    gap: 8px;
+}
+
+.summary-item .item-name {
+    color: #1a1a2e;
+}
+
+.summary-item .item-quantity {
+    color: #6c757d;
+}
+
+.summary-item .item-price {
+    font-weight: 600;
+    color: #2C3E8F;
+}
+
+.summary-totals {
+    border-top: 2px solid #f0f0f0;
+    padding-top: 16px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 15px;
+    color: #4a5568;
+    font-family: 'Inter', sans-serif;
+}
+
+.summary-row.total {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1a1a2e;
+    padding-top: 12px;
+    border-top: 2px solid #f0f0f0;
+    margin-top: 4px;
+}
+
+.summary-row .free {
+    color: #27ae60;
+    font-weight: 700;
+}
+
+.shipping-notice {
+    background: #e6f7ed;
+    color: #065f46;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin: 8px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Inter', sans-serif;
+}
+
+.shipping-notice i {
+    color: #27ae60;
+}
+
+.trust-badges {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 2px solid #f0f0f0;
+}
+
+.trust-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #6c757d;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+}
+
+.trust-badge i {
+    font-size: 20px;
+    color: #2C3E8F;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 1024px) {
+    .checkout-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .order-summary {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .checkout-page {
+        padding: 40px 0;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .checkout-form-wrapper {
+        padding: 24px;
+    }
+    
+    .order-summary {
+        padding: 24px;
+    }
+    
+    .trust-badges {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .trust-badges {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .page-header h1 {
+        font-size: 24px;
+    }
+} 

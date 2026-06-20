@@ -1,0 +1,31 @@
+# ============================================================
+# FILE: my-shop/public/.htaccess
+# PURPOSE: URL rewriting and security rules
+# ============================================================
+
+# Enable rewrite engine
+RewriteEngine On
+
+# If the request is not for a real file or directory
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Route all requests to index.php
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Prevent access to sensitive directories
+RedirectMatch 403 ^/(app|storage|vendor)/.*
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "DENY"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Disable directory listing
+Options -Indexes
+
+# File upload size limit
+php_value upload_max_filesize 5M
+php_value post_max_size 5M

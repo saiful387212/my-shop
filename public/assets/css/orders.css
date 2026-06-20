@@ -1,0 +1,431 @@
+/* ============================================================
+   FILE: public/assets/css/orders.css
+   PURPOSE: Order history page styles
+   ============================================================ */
+
+/* ============================================
+   ORDERS PAGE
+   ============================================ */
+
+.orders-page {
+    padding: 60px 0;
+    background: #f8fafc;
+    min-height: calc(100vh - 200px);
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.page-header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #1a1a2e;
+    font-family: 'Inter', sans-serif;
+}
+
+.page-header h1::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background: #2C3E8F;
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
+
+.page-header p {
+    color: #6c757d;
+    font-size: 16px;
+    margin-top: 8px;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ============================================
+   ALERT MESSAGES
+   ============================================ */
+
+.alert {
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+}
+
+.alert-danger {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.alert i {
+    font-size: 20px;
+}
+
+/* ============================================
+   ORDERS LIST
+   ============================================ */
+
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ============================================
+   ORDER CARD
+   ============================================ */
+
+.order-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #eef2f7;
+    transition: all 0.3s ease;
+}
+
+.order-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Order Header */
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f0f0f0;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.order-info {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+}
+
+.order-info .label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+    font-family: 'Inter', sans-serif;
+}
+
+.order-info .value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a2e;
+    font-family: 'Inter', sans-serif;
+}
+
+.order-number .value {
+    color: #2C3E8F;
+}
+
+.order-status {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.status-badge {
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+}
+
+.status-badge.pending {
+    background: #fef3e7;
+    color: #f39c12;
+}
+
+.status-badge.processing {
+    background: #e8edf9;
+    color: #2C3E8F;
+}
+
+.status-badge.shipped {
+    background: #e6f7ed;
+    color: #27ae60;
+}
+
+.status-badge.delivered {
+    background: #e6f7ed;
+    color: #27ae60;
+}
+
+.status-badge.cancelled {
+    background: #fde8e8;
+    color: #e74c3c;
+}
+
+.order-total {
+    font-size: 20px;
+    font-weight: 800;
+    color: #2C3E8F;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Order Items */
+.order-items {
+    padding: 16px 0;
+}
+
+.items-header {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1fr 1fr;
+    gap: 12px;
+    padding: 8px 0;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+    border-bottom: 1px solid #f0f0f0;
+    font-family: 'Inter', sans-serif;
+}
+
+.order-item {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1fr 1fr;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f8fafc;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    align-items: center;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.order-item .item-name {
+    font-weight: 500;
+    color: #1a1a2e;
+}
+
+.order-item .item-price {
+    color: #4a5568;
+}
+
+.order-item .item-quantity {
+    color: #6c757d;
+}
+
+.order-item .item-subtotal {
+    font-weight: 700;
+    color: #2C3E8F;
+}
+
+/* Order Footer */
+.order-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 2px solid #f0f0f0;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.item-count {
+    font-size: 14px;
+    color: #6c757d;
+    font-family: 'Inter', sans-serif;
+}
+
+.item-count i {
+    color: #2C3E8F;
+    margin-right: 6px;
+}
+
+.btn {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-outline {
+    background: transparent;
+    color: #2C3E8F;
+    border: 2px solid #2C3E8F;
+}
+
+.btn-outline:hover {
+    background: #2C3E8F;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(44, 62, 143, 0.3);
+}
+
+.btn-primary {
+    background: #2C3E8F;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1a2a6c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(44, 62, 143, 0.3);
+}
+
+.btn-sm {
+    padding: 6px 16px;
+    font-size: 13px;
+}
+
+/* ============================================
+   EMPTY ORDERS
+   ============================================ */
+
+.empty-orders {
+    text-align: center;
+    padding: 80px 20px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #eef2f7;
+}
+
+.empty-icon {
+    font-size: 80px;
+    color: #cbd5e0;
+    margin-bottom: 20px;
+}
+
+.empty-icon i {
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+.empty-orders h2 {
+    font-size: 24px;
+    color: #1a1a2e;
+    margin-bottom: 12px;
+    font-family: 'Inter', sans-serif;
+}
+
+.empty-orders p {
+    color: #6c757d;
+    margin-bottom: 24px;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+    .orders-page {
+        padding: 40px 0;
+    }
+    
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .order-info {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .order-status {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .items-header {
+        display: none;
+    }
+    
+    .order-item {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .order-item .item-name {
+        font-weight: 600;
+        font-size: 15px;
+    }
+    
+    .order-item .item-price::before {
+        content: 'Price: ';
+        font-weight: 600;
+        color: #6c757d;
+    }
+    
+    .order-item .item-quantity::before {
+        content: 'Qty: ';
+        font-weight: 600;
+        color: #6c757d;
+    }
+    
+    .order-item .item-subtotal::before {
+        content: 'Subtotal: ';
+        font-weight: 600;
+        color: #6c757d;
+    }
+    
+    .order-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .order-footer .btn {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .order-card {
+        padding: 16px;
+    }
+    
+    .order-total {
+        font-size: 17px;
+    }
+    
+    .order-status {
+        flex-wrap: wrap;
+    }
+    
+    .page-header h1 {
+        font-size: 24px;
+    }
+}
