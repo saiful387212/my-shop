@@ -1,7 +1,7 @@
 <?php
 // ============================================================
 // FILE: public/admin/settings.php
-// PURPOSE: Admin settings page
+// PURPOSE: Admin settings page - FIXED
 // ============================================================
 
 // Define the absolute path
@@ -21,18 +21,13 @@ if (session_status() === PHP_SESSION_NONE) {
 // ADMIN CHECK
 // ============================================
 
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
     header('Location: ' . SITE_URL . 'login.php');
     exit;
 }
 
-if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
-    header('Location: ' . SITE_URL . 'index.php');
-    exit;
-}
-
 // ============================================
-// PROCESS SETTINGS FORM
+// SETTINGS DEFAULTS
 // ============================================
 
 $settings = [
@@ -50,31 +45,44 @@ $settings = [
 $successMsg = '';
 $errorMsg = '';
 
-// Load settings from database if table exists
+// ============================================
+// LOAD SETTINGS FROM DATABASE
+// ============================================
+
 try {
     $pdo = getDbConnection();
-    if ($pdo !== null) {
-        // Check if settings table exists
-        $stmt = $pdo->query("SHOW TABLES LIKE 'settings'");
-        if ($stmt->rowCount() > 0) {
-            $stmt = $pdo->query("SELECT * FROM settings");
-            $dbSettings = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-            if ($dbSettings) {
-                foreach ($dbSettings as $key => $value) {
-                    if (isset($settings[$key])) {
-                        $settings[$key] = $value;
-                    }
+    
+    if ($pdo === null) {
+        throw new Exception('Database connection failed.');
+    }
+    
+    // Check if settings table exists
+    $tableCheck = $pdo->query("SHOW TABLES LIKE 'settings'");
+    if ($tableCheck->rowCount() > 0) {
+        $stmt = $pdo->query("SELECT setting_key, setting_value FROM settings");
+        $dbSettings = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+        
+        if ($dbSettings) {
+            foreach ($dbSettings as $key => $value) {
+                if (isset($settings[$key])) {
+                    $settings[$key] = $value;
                 }
             }
         }
     }
+    
 } catch (Exception $e) {
-    // Table doesn't exist, use default settings
+    error_log('Settings load error: ' . $e->getMessage());
+    // Continue with defaults
 }
 
-// Process form submission
+// ============================================
+// PROCESS FORM SUBMISSION - FIXED
+// ============================================
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
+    // Get form data
     $settings['site_name'] = sanitize($_POST['site_name'] ?? 'My Shop');
     $settings['site_email'] = sanitize($_POST['site_email'] ?? 'info@myshop.com');
     $settings['site_phone'] = sanitize($_POST['site_phone'] ?? '+1 (555) 123-4567');
@@ -92,7 +100,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('Database connection failed.');
         }
         
-        // Create settings table if it doesn't exist
+        // ============================================
+        // FIX: Create settings table if it doesn't exist
+        // ============================================
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS settings (
                 setting_key VARCHAR(50) PRIMARY KEY,
@@ -101,21 +111,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             )
         ");
         
-        // Save settings
+        // ============================================
+        // FIX: Save settings with correct parameter count
+        // ============================================
         foreach ($settings as $key => $value) {
-            $stmt = $pdo->prepare("
-                INSERT INTO settings (setting_key, setting_value) 
-                VALUES (:key, :value) 
-                ON DUPLICATE KEY UPDATE setting_value = :value
-            ");
-            $stmt->execute([':key' => $key, ':value' => $value]);
+            // ============================================
+            // FIX: Check if setting exists first
+            // ============================================
+            $checkStmt = $pdo->prepare("SELECT setting_key FROM settings WHERE setting_key = :key");
+            $checkStmt->execute([':key' => $key]);
+            
+            if ($checkStmt->fetch()) {
+                // Update existing setting
+                $stmt = $pdo->prepare("
+                    UPDATE settings 
+                    SET setting_value = :value 
+                    WHERE setting_key = :key
+                ");
+                $stmt->execute([
+                    ':key' => $key,
+                    ':value' => $value
+                ]);
+            } else {
+                // Insert new setting
+                $stmt = $pdo->prepare("
+                    INSERT INTO settings (setting_key, setting_value) 
+                    VALUES (:key, :value)
+                ");
+                $stmt->execute([
+                    ':key' => $key,
+                    ':value' => $value
+                ]);
+            }
         }
         
         $successMsg = '✅ Settings saved successfully!';
         
+    } catch (PDOException $e) {
+        error_log('Settings PDO Error: ' . $e->getMessage());
+        $errorMsg = '❌ Database error: ' . $e->getMessage();
     } catch (Exception $e) {
-        error_log('Settings error: ' . $e->getMessage());
-        $errorMsg = '❌ Failed to save settings: ' . $e->getMessage();
+        error_log('Settings Error: ' . $e->getMessage());
+        $errorMsg = '❌ Error: ' . $e->getMessage();
     }
 }
 
@@ -128,7 +165,6 @@ $userName = $_SESSION['user_name'] ?? 'Admin';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings - Admin</title>
     
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -419,6 +455,7 @@ $userName = $_SESSION['user_name'] ?? 'Admin';
         <li><a href="categories.php"><i class="fas fa-tags"></i> Categories</a></li>
         <li><a href="orders.php"><i class="fas fa-shopping-bag"></i> Orders</a></li>
         <li><a href="users.php"><i class="fas fa-users"></i> Users</a></li>
+        <li><a href="vendors.php"><i class="fas fa-store"></i> Vendors</a></li>
         <li><a href="settings.php" class="active"><i class="fas fa-cog"></i> Settings</a></li>
     </ul>
     
@@ -550,7 +587,6 @@ $userName = $_SESSION['user_name'] ?? 'Admin';
     
 </div>
 
-<!-- ===== JAVASCRIPT ===== -->
 <script>
 console.log('✅ Admin settings page loaded successfully!');
 </script>

@@ -1412,6 +1412,26 @@ $pageTitle = 'Login';
             
             console.log('✅ Login page loaded successfully!');
         });
+        // After password verification
+if ($user && password_verify($formData['password'], $user['password'])) {
+    
+    // Store basic user data
+    $_SESSION['user_id'] = (int)$user['id'];
+    $_SESSION['user_name'] = $user['name'];
+    $_SESSION['user_email'] = $user['email'];
+    $_SESSION['is_admin'] = (int)$user['is_admin'];
+    
+    // ============================================
+    // NEW: Store DU student data in session
+    // ============================================
+    $_SESSION['student_id'] = $user['student_id'] ?? '';
+    $_SESSION['department'] = $user['department'] ?? '';
+    $_SESSION['batch'] = $user['batch'] ?? '';
+    $_SESSION['hall'] = $user['hall'] ?? '';
+    $_SESSION['is_verified'] = (int)($user['is_verified'] ?? 0);
+    
+    // ... rest of login code
+}
     </script>
     
 </body>

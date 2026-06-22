@@ -93,11 +93,20 @@ try {
         $duShops = $stmt->fetchAll();
     }
     
+    // Get lost & found count
+    $lostFoundCount = 0;
+    if ($pdo !== null) {
+        $stmt = $pdo->query("SELECT COUNT(*) as count FROM lost_items WHERE status = 'open'");
+        $result = $stmt->fetch();
+        $lostFoundCount = $result ? $result['count'] : 0;
+    }
+    
 } catch (Exception $e) {
     error_log('Homepage error: ' . $e->getMessage());
     $categories = [];
     $featuredProducts = [];
     $duShops = [];
+    $lostFoundCount = 0;
 }
 
 // Get user info
@@ -292,6 +301,26 @@ $pageTitle = 'DU Marketplace';
             background: #219a52;
         }
         
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+            border-color: #f39c12;
+        }
+        
+        .btn-warning:hover {
+            background: #e08e0b;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+            border-color: #e74c3c;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
         .btn-small {
             padding: 6px 14px;
             font-size: 12px;
@@ -432,15 +461,22 @@ $pageTitle = 'DU Marketplace';
             margin-right: 6px;
         }
         
+        .nav-menu li a .badge-nav {
+            background: #FFD700;
+            color: #1a1a2e;
+            font-size: 10px;
+            padding: 1px 8px;
+            border-radius: 10px;
+            margin-left: 4px;
+            font-weight: 700;
+        }
+        
         /* ============================================
            HERO SECTION WITH CURZON HALL BACKGROUND
            ============================================ */
         
         .hero {
             padding: 80px 0;
-            /* ============================================
-               CURZON HALL IMAGE - CHANGE PATH IF NEEDED
-               ============================================ */
             background-image: url('images/carzon.jpg');
             background-size: cover;
             background-position: center;
@@ -452,12 +488,10 @@ $pageTitle = 'DU Marketplace';
             align-items: center;
         }
         
-        /* Fallback color if image doesn't load */
         .hero {
             background-color: #0a0a2e;
         }
         
-        /* Dark overlay for text readability */
         .hero::before {
             content: '';
             position: absolute;
@@ -569,6 +603,76 @@ $pageTitle = 'DU Marketplace';
         }
         
         /* ============================================
+           QUICK ACCESS BANNER
+           ============================================ */
+        
+        .quick-access {
+            padding: 40px 0;
+            background: linear-gradient(135deg, #f8fafc, #eef2f7);
+        }
+        
+        .quick-access-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .quick-access-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: white;
+            padding: 20px 24px;
+            border-radius: 16px;
+            text-decoration: none;
+            color: #1a1a2e;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .quick-access-card:hover {
+            border-color: #2C3E8F;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        
+        .quick-access-card .icon {
+            font-size: 36px;
+            flex-shrink: 0;
+        }
+        
+        .quick-access-card .info h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .quick-access-card .info p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 13px;
+        }
+        
+        .quick-access-card .arrow {
+            margin-left: auto;
+            color: #2C3E8F;
+            font-size: 18px;
+        }
+        
+        .quick-access-card .count-badge {
+            background: #e74c3c;
+            color: white;
+            font-size: 11px;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        
+        /* ============================================
            DU FEATURES
            ============================================ */
         
@@ -624,6 +728,7 @@ $pageTitle = 'DU Marketplace';
             background: #f8fafc;
             border: 1px solid #eef2f7;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
         
         .feature-card:hover {
@@ -655,6 +760,14 @@ $pageTitle = 'DU Marketplace';
             font-size: 14px;
             color: #6c757d;
             margin-top: 4px;
+        }
+        
+        .feature-card .feature-link {
+            display: inline-block;
+            margin-top: 8px;
+            color: #2C3E8F;
+            font-weight: 600;
+            font-size: 13px;
         }
         
         /* ============================================
@@ -1078,6 +1191,9 @@ $pageTitle = 'DU Marketplace';
             .features-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+            .quick-access-grid {
+                grid-template-columns: 1fr 1fr;
+            }
         }
         
         @media (max-width: 768px) {
@@ -1139,6 +1255,11 @@ $pageTitle = 'DU Marketplace';
             .hero-stats {
                 flex-direction: column;
                 gap: 12px;
+            }
+            
+            .quick-access-grid {
+                grid-template-columns: 1fr;
+                max-width: 400px;
             }
             
             .features-grid {
@@ -1210,6 +1331,14 @@ $pageTitle = 'DU Marketplace';
             .vendors-grid {
                 grid-template-columns: 1fr 1fr;
                 gap: 12px;
+            }
+            
+            .quick-access-card {
+                padding: 16px 18px;
+            }
+            
+            .quick-access-card .icon {
+                font-size: 28px;
             }
         }
     </style>
@@ -1286,7 +1415,10 @@ $pageTitle = 'DU Marketplace';
                 <ul class="nav-menu">
                     <li><a href="index.php" class="active"><i class="fas fa-home"></i> Home</a></li>
                     <li><a href="products.php"><i class="fas fa-box"></i> Products</a></li>
+                    <li><a href="textbooks.php"><i class="fas fa-book"></i> 📚 Textbooks</a></li>
+                    <li><a href="lost-found.php"><i class="fas fa-search"></i> 🔍 Lost & Found <span class="badge-nav"><?php echo $lostFoundCount; ?></span></a></li>
                     <li><a href="shops.php"><i class="fas fa-store"></i> Vendors</a></li>
+                    <li><a href="product_details.php?id=<?php echo $product['id']; ?>">Product Details</a></li>
                     
                     <?php if (!empty($categories)): ?>
                         <?php foreach ($categories as $category): ?>
@@ -1323,6 +1455,12 @@ $pageTitle = 'DU Marketplace';
                 <div class="hero-buttons">
                     <a href="products.php" class="btn btn-primary btn-large">
                         <i class="fas fa-shopping-bag"></i> Start Shopping
+                    </a>
+                    <a href="textbooks.php" class="btn btn-outline btn-large">
+                        <i class="fas fa-book"></i> 📚 Textbooks
+                    </a>
+                    <a href="lost-found.php" class="btn btn-outline btn-large">
+                        <i class="fas fa-search"></i> 🔍 Lost & Found
                     </a>
                     <?php if ($isLoggedIn && !$userShop): ?>
                         <a href="shop/create.php" class="btn btn-outline btn-large">
@@ -1361,6 +1499,42 @@ $pageTitle = 'DU Marketplace';
     </section>
     
     <!-- ============================================
+         QUICK ACCESS - TEXTBOOKS & LOST & FOUND
+         ============================================ -->
+    <section class="quick-access">
+        <div class="container">
+            <div class="quick-access-grid">
+                <a href="textbooks.php" class="quick-access-card">
+                    <span class="icon">📚</span>
+                    <div class="info">
+                        <h3>Textbook Exchange</h3>
+                        <p>Buy & sell used textbooks</p>
+                    </div>
+                    <span class="arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                
+                <a href="lost-found.php" class="quick-access-card">
+                    <span class="icon">🔍</span>
+                    <div class="info">
+                        <h3>Lost & Found <span class="count-badge"><?php echo $lostFoundCount; ?></span></h3>
+                        <p>Report lost or found items</p>
+                    </div>
+                    <span class="arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                
+                <a href="shops.php" class="quick-access-card">
+                    <span class="icon">🏪</span>
+                    <div class="info">
+                        <h3>DU Vendors</h3>
+                        <p>Shop from DU students</p>
+                    </div>
+                    <span class="arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- ============================================
          DU FEATURES
          ============================================ -->
     <section class="du-features">
@@ -1376,10 +1550,17 @@ $pageTitle = 'DU Marketplace';
                     <h3>Student Only</h3>
                     <p>Exclusively for DU students and faculty</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-book"></i></div>
-                    <h3>Textbook Exchange</h3>
-                    <p>Buy and sell used textbooks easily</p>
+                <div class="feature-card" onclick="window.location.href='textbooks.php'">
+                    <div class="feature-icon"><i class="fas fa-book-open"></i></div>
+                    <h3>📚 Textbook Exchange</h3>
+                    <p>Find affordable textbooks from DU seniors</p>
+                    <span class="feature-link">Browse Now →</span>
+                </div>
+                <div class="feature-card" onclick="window.location.href='lost-found.php'">
+                    <div class="feature-icon"><i class="fas fa-search-location"></i></div>
+                    <h3>🔍 Lost & Found</h3>
+                    <p>Report lost or found items on campus</p>
+                    <span class="feature-link">Report Now →</span>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon"><i class="fas fa-handshake"></i></div>
@@ -1390,6 +1571,21 @@ $pageTitle = 'DU Marketplace';
                     <div class="feature-icon"><i class="fas fa-location-dot"></i></div>
                     <h3>Campus Delivery</h3>
                     <p>Easy meetups on campus</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                    <h3>Safe & Secure</h3>
+                    <p>Verified DU student sellers</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-dollar-sign"></i></div>
+                    <h3>Best Prices</h3>
+                    <p>Student-friendly rates</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-clock"></i></div>
+                    <h3>24/7 Access</h3>
+                    <p>Shop anytime, anywhere</p>
                 </div>
             </div>
         </div>
@@ -1536,19 +1732,27 @@ $pageTitle = 'DU Marketplace';
             <h2>🚀 Start Your DU Business Today!</h2>
             <p>Join the Dhaka University student marketplace. Sell your items and connect with fellow students.</p>
             
-            <?php if ($isLoggedIn && $userShop): ?>
-                <a href="<?php echo SITE_URL; ?>shop/manage.php" class="btn">
-                    <i class="fas fa-store"></i> Manage Your Shop
+            <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+                <?php if ($isLoggedIn && $userShop): ?>
+                    <a href="<?php echo SITE_URL; ?>shop/manage.php" class="btn">
+                        <i class="fas fa-store"></i> Manage Your Shop
+                    </a>
+                <?php elseif ($isLoggedIn && !$userShop): ?>
+                    <a href="<?php echo SITE_URL; ?>shop/create.php" class="btn">
+                        <i class="fas fa-plus-circle"></i> Open Your Shop
+                    </a>
+                <?php else: ?>
+                    <a href="<?php echo SITE_URL; ?>register.php" class="btn">
+                        <i class="fas fa-user-plus"></i> Join as a DU Student
+                    </a>
+                <?php endif; ?>
+                <a href="textbooks.php" class="btn" style="background:white;color:#2C3E8F;">
+                    <i class="fas fa-book"></i> 📚 Textbooks
                 </a>
-            <?php elseif ($isLoggedIn && !$userShop): ?>
-                <a href="<?php echo SITE_URL; ?>shop/create.php" class="btn">
-                    <i class="fas fa-plus-circle"></i> Open Your Shop
+                <a href="lost-found.php" class="btn" style="background:white;color:#2C3E8F;">
+                    <i class="fas fa-search"></i> 🔍 Lost & Found
                 </a>
-            <?php else: ?>
-                <a href="<?php echo SITE_URL; ?>register.php" class="btn">
-                    <i class="fas fa-user-plus"></i> Join as a DU Student
-                </a>
-            <?php endif; ?>
+            </div>
         </div>
     </section>
     
@@ -1575,6 +1779,8 @@ $pageTitle = 'DU Marketplace';
                     <h4>Quick Links</h4>
                     <ul>
                         <li><a href="products.php">Products</a></li>
+                        <li><a href="textbooks.php">📚 Textbooks</a></li>
+                        <li><a href="lost-found.php">🔍 Lost & Found</a></li>
                         <li><a href="shops.php">Vendors</a></li>
                         <li><a href="about.php">About</a></li>
                         <li><a href="contact.php">Contact</a></li>
@@ -1590,6 +1796,8 @@ $pageTitle = 'DU Marketplace';
                         <?php else: ?>
                             <li><a href="register.php">Register</a></li>
                         <?php endif; ?>
+                        <li><a href="textbooks.php">Textbook Exchange</a></li>
+                        <li><a href="lost-found.php">Lost & Found</a></li>
                         <li><a href="terms.php">Terms</a></li>
                         <li><a href="privacy.php">Privacy Policy</a></li>
                     </ul>
@@ -1635,6 +1843,7 @@ $pageTitle = 'DU Marketplace';
             console.log('🎓 Curzon Hall - Where tradition meets modern academia.');
         });
     </script>
+    
     
 </body>
 </html>

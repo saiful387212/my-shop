@@ -147,4 +147,31 @@ function regenerateSession() {
     session_regenerate_id(true);
     $_SESSION['validated'] = true;
 }
+/**
+ * Render star ratings
+ */
+function renderStars($rating, $size = 'regular') {
+    $rating = round($rating * 2) / 2; // Round to nearest half
+    $fullStars = floor($rating);
+    $halfStar = ($rating - $fullStars) >= 0.5;
+    $emptyStars = 5 - $fullStars - ($halfStar ? 1 : 0);
+    
+    $html = '<div class="rating-stars">';
+    
+    for ($i = 0; $i < $fullStars; $i++) {
+        $html .= '<span class="star">★</span>';
+    }
+    
+    if ($halfStar) {
+        $html .= '<span class="star half">★</span>';
+    }
+    
+    for ($i = 0; $i < $emptyStars; $i++) {
+        $html .= '<span class="star empty">★</span>';
+    }
+    
+    $html .= '</div>';
+    
+    return $html;
+}
 ?>
