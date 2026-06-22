@@ -1,245 +1,272 @@
 // ============================================================
 // FILE: public/assets/js/cart.js
-// PURPOSE: Shopping cart interactivity
+// PURPOSE: Shopping cart functionality - FIXED
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
     
+    console.log('✅ cart.js loaded successfully!');
+    
     // ============================================
-    // QUANTITY CONTROL
+    // ADD TO CART - USING EVENT DELEGATION
     // ============================================
     
-    const quantityInputs = document.querySelectorAll('.qty-input');
-    const decreaseBtns = document.querySelectorAll('.decrease-qty');
-    const increaseBtns = document.querySelectorAll('.increase-qty');
+    // Track ongoing requests to prevent duplicates
+    const pendingRequests = {};
     
-    /**
-     * Update cart item quantity
-     */
-    function updateCartQuantity(productId, quantity) {
-        // Show loading state
-        const item = document.querySelector(`.cart-item[data-product-id="${productId}"]`);
-        if (item) {
-            item.style.opacity = '0.6';
+    document.addEventListener('click', function(e) {
+        const button = e.target.closest('.add-to-cart');
+        
+        if (button) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Check if already processing
+            const productId = button.getAttribute('data-id');
+            if (pendingRequests[productId]) {
+                console.log('⏳ Already processing product ' + productId);
+                return;
+            }
+            
+            console.log('🛒 Add to Cart clicked!');
+            handleAddToCart(button);
+            return;
         }
+
+        const decreaseButton = e.target.closest('.decrease-qty');
+        if (decreaseButton) {
+            e.preventDefault();
+            const productId = decreaseButton.getAttribute('data-id');
+            updateQuantity(productId, -1);
+            return;
+        }
+
+        const increaseButton = e.target.closest('.increase-qty');
+        if (increaseButton) {
+            e.preventDefault();
+            const productId = increaseButton.getAttribute('data-id');
+            updateQuantity(productId, 1);
+        }
+    });
+
+    document.addEventListener('change', function(e) {
+        const input = e.target.closest('.qty-input');
+        if (!input) return;
+
+        const productId = input.getAttribute('data-id');
+        const quantity = parseInt(input.value, 10);
+        if (!productId || Number.isNaN(quantity) || quantity < 1) {
+            return;
+        }
+
+        updateQuantity(productId, quantity, true);
+    });
+    
+    function handleAddToCart(button) {
+        // Get product data from button
+        const productId = button.getAttribute('data-id');
+        const productName = button.getAttribute('data-name');
+        const productPrice = button.getAttribute('data-price');
+        const productImage = button.getAttribute('data-image') || '';
+        
+        console.log('📦 Product:', { id: productId, name: productName, price: productPrice });
+        
+        if (!productId || !productName || !productPrice) {
+            showNotification('❌ Error: Missing product information', 'error');
+            return;
+        }
+        
+        // Mark as pending
+        pendingRequests[productId] = true;
+        
+        // Show loading state
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+        button.disabled = true;
         
         // Send AJAX request
-        fetch('cart.php?action=update', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `id=${productId}&quantity=${quantity}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Update subtotal for this item
-                const subtotalElement = document.querySelector(`.item-subtotal[data-id="${productId}"]`);
-                if (subtotalElement) {
-                    subtotalElement.textContent = '$' + data.item_subtotal.toFixed(2);
+        const url = 'cart.php?action=add&id=' + productId + 
+                   '&name=' + encodeURIComponent(productName) + 
+                   '&price=' + productPrice + 
+                   '&image=' + encodeURIComponent(productImage) + 
+                   '&ajax=1';
+        
+        console.log('📡 Sending request to:', url);
+        
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error('Network error');
+                return response.json();
+            })
+            .then(data => {
+                console.log('📨 Response:', data);
+                
+                if (data.success) {
+                    updateCartCount(data.cart_count);
+                    
+                    button.innerHTML = '<i class="fas fa-check"></i> Added!';
+                    button.style.background = '#27ae60';
+                    button.style.color = 'white';
+                    button.style.borderColor = '#27ae60';
+                    
+                    showNotification('✅ ' + productName + ' added to cart!', 'success');
+                    animateCartIcon();
+                    
+                    setTimeout(() => {
+                        button.innerHTML = originalHTML;
+                        button.style.background = '';
+                        button.style.color = '';
+                        button.style.borderColor = '';
+                        button.disabled = false;
+                        // Remove from pending
+                        delete pendingRequests[productId];
+                    }, 1500);
+                } else {
+                    button.innerHTML = originalHTML;
+                    button.disabled = false;
+                    delete pendingRequests[productId];
+                    showNotification('❌ Error adding to cart', 'error');
                 }
-                
-                // Update cart totals
-                document.getElementById('subtotalDisplay').textContent = '$' + data.cart_subtotal.toFixed(2);
-                
-                // Update shipping
-                updateShipping(data.cart_subtotal);
-                
-                // Update total
-                updateTotal(data.cart_subtotal);
-                
-                // Update cart count in header (if exists)
-                updateCartCount(data.cart_total);
-            }
-            
-            // Remove loading state
-            if (item) {
-                item.style.opacity = '1';
-            }
-        })
-        .catch(error => {
-            console.error('Error updating cart:', error);
-            if (item) {
-                item.style.opacity = '1';
-            }
-        });
+            })
+            .catch(error => {
+                console.error('❌ Error:', error);
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+                delete pendingRequests[productId];
+                showNotification('❌ Error adding to cart', 'error');
+            });
     }
     
-    /**
-     * Update shipping display
-     */
-    function updateShipping(subtotal) {
-        const shippingDisplay = document.getElementById('shippingDisplay');
-        const freeShippingThreshold = 50;
-        
-        if (subtotal >= freeShippingThreshold) {
-            shippingDisplay.innerHTML = '<span class="free-shipping">FREE</span>';
-            document.querySelector('.free-shipping-notice')?.remove();
-        } else if (subtotal > 0) {
-            const shipping = 5.00;
-            shippingDisplay.textContent = '$' + shipping.toFixed(2);
-            
-            // Add free shipping notice if not exists
-            if (!document.querySelector('.free-shipping-notice')) {
-                const notice = document.createElement('div');
-                notice.className = 'free-shipping-notice';
-                notice.innerHTML = `
-                    <i class="fas fa-truck"></i>
-                    Add $${(freeShippingThreshold - subtotal).toFixed(2)} more for free shipping!
-                `;
-                document.querySelector('.summary-row.total').before(notice);
-            } else {
-                const notice = document.querySelector('.free-shipping-notice');
-                notice.innerHTML = `
-                    <i class="fas fa-truck"></i>
-                    Add $${(freeShippingThreshold - subtotal).toFixed(2)} more for free shipping!
-                `;
-            }
-        } else {
-            shippingDisplay.textContent = '$0.00';
-            document.querySelector('.free-shipping-notice')?.remove();
-        }
-    }
+    // ============================================
+    // UPDATE CART COUNT
+    // ============================================
     
-    /**
-     * Update total
-     */
-    function updateTotal(subtotal) {
-        const totalDisplay = document.getElementById('totalDisplay');
-        const freeShippingThreshold = 50;
-        let total = subtotal;
-        
-        if (subtotal > 0 && subtotal < freeShippingThreshold) {
-            total += 5.00;
-        }
-        
-        totalDisplay.textContent = '$' + total.toFixed(2);
-    }
-    
-    /**
-     * Update cart count in header
-     */
     function updateCartCount(count) {
         const cartCount = document.getElementById('cartCount');
         if (cartCount) {
             cartCount.textContent = count;
+            console.log('📊 Cart count updated to:', count);
+        }
+    }
+
+    function updateQuantity(productId, deltaOrValue, isExact = false) {
+        if (!productId) return;
+
+        const input = document.querySelector(`.qty-input[data-id="${productId}"]`);
+        if (!input) return;
+
+        const currentValue = parseInt(input.value, 10) || 1;
+        const nextQuantity = isExact
+            ? parseInt(deltaOrValue, 10)
+            : Math.max(0, currentValue + deltaOrValue);
+
+        if (Number.isNaN(nextQuantity) || nextQuantity < 0) {
+            return;
+        }
+
+        const body = new URLSearchParams();
+        body.append('id', productId);
+        body.append('quantity', nextQuantity);
+
+        fetch('cart.php?action=update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: body.toString()
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network error');
+            return response.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                showNotification('❌ Unable to update quantity', 'error');
+                return;
+            }
+
+            if (nextQuantity <= 0) {
+                const cartItem = document.querySelector(`.cart-item[data-product-id="${productId}"]`);
+                if (cartItem) {
+                    cartItem.remove();
+                }
+            } else {
+                input.value = nextQuantity;
+                const subtotal = document.querySelector(`.item-subtotal[data-id="${productId}"]`);
+                if (subtotal && typeof data.item_subtotal !== 'undefined') {
+                    subtotal.textContent = '$' + Number(data.item_subtotal).toFixed(2);
+                }
+            }
+
+            updateCartCount(data.cart_total);
+            updateCartSummary(data.cart_subtotal);
+        })
+        .catch(error => {
+            console.error('❌ Error updating quantity:', error);
+            showNotification('❌ Unable to update quantity', 'error');
+        });
+    }
+
+    function updateCartSummary(subtotal) {
+        const subtotalDisplay = document.getElementById('subtotalDisplay');
+        const shippingDisplay = document.getElementById('shippingDisplay');
+        const totalDisplay = document.getElementById('totalDisplay');
+        const pageHeader = document.querySelector('.page-header p');
+
+        if (subtotalDisplay) {
+            subtotalDisplay.textContent = '$' + Number(subtotal || 0).toFixed(2);
+        }
+
+        const shipping = Number(subtotal || 0) > 0 && Number(subtotal || 0) < 50
+            ? 5
+            : 0;
+
+        if (shippingDisplay) {
+            if (shipping > 0) {
+                shippingDisplay.textContent = '$' + shipping.toFixed(2);
+            } else if (Number(subtotal || 0) > 0) {
+                shippingDisplay.innerHTML = '<span class="free-shipping">FREE</span>';
+            } else {
+                shippingDisplay.textContent = '$0.00';
+            }
+        }
+
+        if (totalDisplay) {
+            totalDisplay.textContent = '$' + (Number(subtotal || 0) + shipping).toFixed(2);
+        }
+
+        if (pageHeader) {
+            const items = document.querySelectorAll('.cart-item').length;
+            pageHeader.textContent = items + ' items in your cart';
         }
     }
     
-    // Decrease quantity
-    decreaseBtns.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const productId = this.getAttribute('data-id');
-            const input = document.querySelector(`.qty-input[data-id="${productId}"]`);
-            if (input) {
-                let currentValue = parseInt(input.value) || 1;
-                if (currentValue > 1) {
-                    currentValue--;
-                    input.value = currentValue;
-                    updateCartQuantity(productId, currentValue);
-                }
-            }
-        });
-    });
-    
-    // Increase quantity
-    increaseBtns.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const productId = this.getAttribute('data-id');
-            const input = document.querySelector(`.qty-input[data-id="${productId}"]`);
-            if (input) {
-                let currentValue = parseInt(input.value) || 1;
-                if (currentValue < 99) {
-                    currentValue++;
-                    input.value = currentValue;
-                    updateCartQuantity(productId, currentValue);
-                }
-            }
-        });
-    });
-    
-    // Manual quantity input change
-    quantityInputs.forEach(function(input) {
-        input.addEventListener('change', function() {
-            const productId = this.getAttribute('data-id');
-            let value = parseInt(this.value) || 1;
-            
-            if (value < 1) value = 1;
-            if (value > 99) value = 99;
-            
-            this.value = value;
-            updateCartQuantity(productId, value);
-        });
-        
-        // Prevent invalid input
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                this.blur();
-            }
-        });
-    });
-    
     // ============================================
-    // ADD TO CART (from product pages)
+    // ANIMATE CART ICON
     // ============================================
     
-    const addToCartButtons = document.querySelectorAll('.add-to-cart');
-    
-    addToCartButtons.forEach(function(button) {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const productId = this.getAttribute('data-id');
-            const productName = this.getAttribute('data-name');
-            const productPrice = this.getAttribute('data-price');
-            const productImage = this.getAttribute('data-image') || '';
-            
-            // Add to cart via AJAX
-            fetch(`cart.php?action=add&id=${productId}&name=${encodeURIComponent(productName)}&price=${productPrice}&image=${encodeURIComponent(productImage)}&ajax=1`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Show notification
-                        showNotification(data.message, 'success');
-                        
-                        // Update cart count
-                        updateCartCount(data.cart_count);
-                        
-                        // Animate cart icon
-                        const cartIcon = document.querySelector('.cart-icon');
-                        if (cartIcon) {
-                            cartIcon.classList.add('bounce');
-                            setTimeout(() => {
-                                cartIcon.classList.remove('bounce');
-                            }, 500);
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error adding to cart:', error);
-                    showNotification('Error adding item to cart.', 'error');
-                });
-        });
-    });
+    function animateCartIcon() {
+        const cartIcon = document.querySelector('.cart-icon');
+        if (cartIcon) {
+            cartIcon.classList.add('bounce');
+            setTimeout(() => {
+                cartIcon.classList.remove('bounce');
+            }, 500);
+        }
+    }
     
     // ============================================
     // NOTIFICATION SYSTEM
     // ============================================
     
     function showNotification(message, type = 'info') {
-        // Remove existing notifications
         const existing = document.querySelector('.notification-toast');
-        if (existing) {
-            existing.remove();
-        }
+        if (existing) existing.remove();
         
-        // Create notification
         const notification = document.createElement('div');
-        notification.className = `notification-toast notification-${type}`;
+        notification.className = 'notification-toast notification-' + type;
         notification.innerHTML = `
             <div class="notification-content">
-                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
                 <span>${message}</span>
                 <button class="notification-close">&times;</button>
             </div>
@@ -247,49 +274,36 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.body.appendChild(notification);
         
-        // Show with animation
-        setTimeout(() => {
-            notification.classList.add('show');
-        }, 100);
+        setTimeout(() => notification.classList.add('show'), 100);
         
-        // Auto dismiss
         setTimeout(() => {
             notification.classList.remove('show');
-            setTimeout(() => {
-                notification.remove();
-            }, 300);
+            setTimeout(() => notification.remove(), 300);
         }, 3000);
         
-        // Close button
         notification.querySelector('.notification-close').addEventListener('click', function() {
             notification.classList.remove('show');
-            setTimeout(() => {
-                notification.remove();
-            }, 300);
+            setTimeout(() => notification.remove(), 300);
         });
     }
     
     // ============================================
-    // NOTIFICATION STYLES (dynamic)
+    // ADD NOTIFICATION STYLES
     // ============================================
     
-    const notificationStyles = document.createElement('style');
-    notificationStyles.textContent = `
+    const style = document.createElement('style');
+    style.textContent = `
         .notification-toast {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 99999;
             transform: translateX(120%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.4s ease;
             max-width: 400px;
             min-width: 280px;
         }
-        
-        .notification-toast.show {
-            transform: translateX(0);
-        }
-        
+        .notification-toast.show { transform: translateX(0); }
         .notification-content {
             background: white;
             padding: 16px 20px;
@@ -300,67 +314,21 @@ document.addEventListener('DOMContentLoaded', function() {
             gap: 12px;
             border-left: 4px solid #2C3E8F;
         }
-        
-        .notification-success .notification-content {
-            border-left-color: #27ae60;
-        }
-        
-        .notification-error .notification-content {
-            border-left-color: #e74c3c;
-        }
-        
-        .notification-success i {
-            color: #27ae60;
-        }
-        
-        .notification-error i {
-            color: #e74c3c;
-        }
-        
-        .notification-content i {
-            font-size: 24px;
-        }
-        
-        .notification-content span {
-            flex: 1;
-            font-size: 14px;
-            font-weight: 500;
-            color: #1a1a2e;
-        }
-        
-        .notification-close {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: #6c757d;
-            padding: 0 4px;
-        }
-        
-        .notification-close:hover {
-            color: #1a1a2e;
-        }
-        
+        .notification-success .notification-content { border-left-color: #27ae60; }
+        .notification-error .notification-content { border-left-color: #e74c3c; }
+        .notification-content span { flex: 1; font-size: 14px; font-weight: 500; color: #1a1a2e; }
+        .notification-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #6c757d; }
+        .notification-close:hover { color: #1a1a2e; }
         @keyframes bounce {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.2); }
         }
-        
-        .bounce {
-            animation: bounce 0.4s ease;
-        }
-        
+        .bounce { animation: bounce 0.4s ease; }
         @media (max-width: 480px) {
-            .notification-toast {
-                top: 10px;
-                right: 10px;
-                left: 10px;
-                max-width: none;
-                min-width: unset;
-            }
+            .notification-toast { top: 10px; right: 10px; left: 10px; max-width: none; min-width: unset; }
         }
     `;
-    document.head.appendChild(notificationStyles);
+    document.head.appendChild(style);
     
-    console.log('✅ Cart functionality loaded successfully!');
+    console.log('✅ Cart functionality ready!');
 });

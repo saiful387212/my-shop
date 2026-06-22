@@ -1,22 +1,16 @@
 <?php
 // ============================================================
 // FILE: public/admin/products.php
-// PURPOSE: Display all products with edit/delete options
+// PURPOSE: Admin product management
 // ============================================================
 
 // Define the absolute path
 define('ABSPATH', realpath(dirname(__DIR__, 2)) . DIRECTORY_SEPARATOR);
 
-// Load configuration
+// Load required files
 require_once ABSPATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php';
-
-// Load database connection
 require_once ABSPATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'database.php';
-
-// Load helper functions
 require_once ABSPATH . 'app' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'functions.php';
-
-// Load Product model
 require_once ABSPATH . 'app' . DIRECTORY_SEPARATOR . 'models' . DIRECTORY_SEPARATOR . 'Product.php';
 
 // Start session
@@ -25,55 +19,53 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // ============================================
-// ADMIN ACCESS CONTROL
+// SIMPLE ADMIN CHECK
 // ============================================
 
-if (!isLoggedIn() || !isAdmin()) {
-    $_SESSION['error_message'] = 'Access denied. Admin only.';
+// If not logged in, go to login
+if (!isset($_SESSION['user_id'])) {
     header('Location: ' . SITE_URL . 'login.php');
     exit;
 }
 
+// If not admin, go to home
+if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
+    header('Location: ' . SITE_URL . 'index.php');
+    exit;
+}
+
 // ============================================
-// FETCH ALL PRODUCTS
+// GET PRODUCTS
 // ============================================
+
+$products = [];
+$error = '';
 
 try {
     $productModel = new Product();
     $products = $productModel->getAllWithCategory();
 } catch (Exception $e) {
-    error_log('Products page error: ' . $e->getMessage());
-    $products = [];
+    $error = 'Could not load products: ' . $e->getMessage();
 }
 
-// ============================================
-// CHECK FOR SUCCESS/ERROR MESSAGES
-// ============================================
-
-$successMessage = $_SESSION['success_message'] ?? '';
-$errorMessage = $_SESSION['error_message'] ?? '';
+// Get messages
+$successMsg = $_SESSION['success_message'] ?? '';
+$errorMsg = $_SESSION['error_message'] ?? '';
 unset($_SESSION['success_message'], $_SESSION['error_message']);
 
-$currentPage = basename($_SERVER['PHP_SELF']);
+$userName = $_SESSION['user_name'] ?? 'Admin';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Products - Admin</title>
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* ============================================================
-           ADMIN PRODUCTS STYLES - ALL EMBEDDED
-           ============================================================ */
-        
         * {
             margin: 0;
             padding: 0;
@@ -81,184 +73,97 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f0f2f5;
-            color: #1a1a2e;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
             display: flex;
             min-height: 100vh;
         }
         
-        /* ============================================
-           SIDEBAR (Same as dashboard)
-           ============================================ */
-        
+        /* ===== SIDEBAR ===== */
         .sidebar {
-            width: 260px;
+            width: 250px;
             background: #1a1a2e;
-            color: rgba(255, 255, 255, 0.8);
+            color: white;
             min-height: 100vh;
+            padding: 20px 0;
             position: fixed;
             top: 0;
             left: 0;
             bottom: 0;
             overflow-y: auto;
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
         }
         
         .sidebar-brand {
-            padding: 24px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .sidebar-brand i {
-            font-size: 28px;
-            color: #2C3E8F;
-            background: white;
-            padding: 8px;
-            border-radius: 10px;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
         }
         
         .sidebar-brand h2 {
-            font-size: 20px;
-            font-weight: 800;
-            color: white;
+            font-size: 22px;
         }
         
-        .sidebar-brand small {
-            display: block;
-            font-size: 11px;
-            font-weight: 400;
-            color: rgba(255, 255, 255, 0.5);
+        .sidebar-brand span {
+            color: #4A6CCF;
         }
         
-        .sidebar-nav {
-            flex: 1;
-            padding: 20px 0;
-        }
-        
-        .sidebar-nav .nav-section {
-            padding: 0 16px 8px;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: rgba(255, 255, 255, 0.3);
-            font-weight: 600;
-        }
-        
-        .sidebar-nav ul {
+        .sidebar-menu {
             list-style: none;
-            padding: 0;
+            padding: 0 10px;
         }
         
-        .sidebar-nav ul li {
-            margin: 2px 12px;
-        }
-        
-        .sidebar-nav ul li a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 16px;
-            border-radius: 10px;
-            color: rgba(255, 255, 255, 0.6);
+        .sidebar-menu li a {
+            display: block;
+            padding: 12px 16px;
+            color: rgba(255,255,255,0.7);
             text-decoration: none;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.3s;
         }
         
-        .sidebar-nav ul li a i {
-            width: 20px;
-            font-size: 16px;
-            text-align: center;
-        }
-        
-        .sidebar-nav ul li a:hover {
-            background: rgba(255, 255, 255, 0.05);
+        .sidebar-menu li a:hover {
+            background: rgba(255,255,255,0.1);
             color: white;
         }
         
-        .sidebar-nav ul li a.active {
+        .sidebar-menu li a.active {
             background: #2C3E8F;
             color: white;
-            box-shadow: 0 4px 12px rgba(44, 62, 143, 0.3);
         }
         
-        .sidebar-nav ul li a .badge {
-            margin-left: auto;
-            background: #e74c3c;
-            color: white;
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 20px;
+        .sidebar-menu li a i {
+            margin-right: 10px;
+            width: 20px;
         }
         
         .sidebar-footer {
-            padding: 16px 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 20px;
         }
         
-        .sidebar-footer .admin-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .sidebar-footer .admin-info .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #2C3E8F;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-            font-size: 18px;
-        }
-        
-        .sidebar-footer .admin-info .admin-name {
-            font-size: 14px;
-            font-weight: 600;
+        .sidebar-footer .admin-name {
+            font-weight: bold;
             color: white;
         }
         
-        .sidebar-footer .admin-info .admin-email {
+        .sidebar-footer .admin-email {
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(255,255,255,0.5);
         }
         
         .sidebar-footer .logout-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: rgba(255, 255, 255, 0.4);
-            text-decoration: none;
-            font-size: 13px;
-            padding: 8px 0;
-            transition: color 0.3s ease;
-            margin-top: 8px;
-        }
-        
-        .sidebar-footer .logout-btn:hover {
+            display: block;
+            margin-top: 10px;
             color: #e74c3c;
+            text-decoration: none;
         }
         
-        /* ============================================
-           MAIN CONTENT
-           ============================================ */
-        
+        /* ===== MAIN CONTENT ===== */
         .main-content {
-            margin-left: 260px;
+            margin-left: 250px;
             flex: 1;
-            padding: 24px 32px;
-            min-height: 100vh;
+            padding: 30px;
         }
         
         .topbar {
@@ -267,60 +172,21 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             align-items: center;
             margin-bottom: 30px;
             padding-bottom: 20px;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #ddd;
         }
         
-        .topbar-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        
-        .menu-toggle {
-            display: none;
-            background: none;
-            border: none;
+        .topbar h1 {
             font-size: 24px;
-            color: #1a1a2e;
-            cursor: pointer;
-            padding: 4px;
-        }
-        
-        .topbar-left h1 {
-            font-size: 24px;
-            font-weight: 700;
-            color: #1a1a2e;
-        }
-        
-        .topbar-left .breadcrumb {
-            font-size: 14px;
-            color: #6c757d;
-        }
-        
-        .topbar-left .breadcrumb span {
-            color: #2C3E8F;
-            font-weight: 600;
-        }
-        
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
         }
         
         .btn {
             padding: 10px 20px;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             font-size: 14px;
-            font-weight: 600;
-            font-family: 'Inter', sans-serif;
             cursor: pointer;
-            transition: all 0.3s ease;
             text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            display: inline-block;
         }
         
         .btn-primary {
@@ -330,17 +196,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         
         .btn-primary:hover {
             background: #1a2a6c;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(44, 62, 143, 0.3);
-        }
-        
-        .btn-success {
-            background: #27ae60;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #219a52;
         }
         
         .btn-warning {
@@ -362,50 +217,35 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         }
         
         .btn-sm {
-            padding: 6px 12px;
+            padding: 5px 10px;
             font-size: 12px;
         }
         
-        /* ============================================
-           MESSAGES
-           ============================================ */
-        
+        /* ===== ALERTS ===== */
         .alert {
-            padding: 16px 20px;
-            border-radius: 10px;
+            padding: 15px 20px;
+            border-radius: 8px;
             margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 500;
         }
         
         .alert-success {
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
         }
         
         .alert-danger {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
         
-        .alert i {
-            font-size: 20px;
-        }
-        
-        /* ============================================
-           PRODUCTS TABLE
-           ============================================ */
-        
+        /* ===== TABLE ===== */
         .table-container {
             background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            border: 1px solid #eef2f7;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             overflow-x: auto;
         }
         
@@ -413,35 +253,16 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 15px;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 10px;
         }
         
-        .table-header h3 {
-            font-size: 16px;
-            font-weight: 700;
-            color: #1a1a2e;
-        }
-        
-        .table-header .search-box {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        
-        .table-header .search-box input {
+        .search-box input {
             padding: 8px 14px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
             font-size: 14px;
-            font-family: 'Inter', sans-serif;
-            min-width: 200px;
-        }
-        
-        .table-header .search-box input:focus {
-            outline: none;
-            border-color: #2C3E8F;
         }
         
         table {
@@ -449,69 +270,63 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             border-collapse: collapse;
         }
         
-        table thead {
-            background: #f8fafc;
-        }
-        
         table th {
+            background: #f8f9fa;
             padding: 12px 16px;
             text-align: left;
             font-size: 12px;
-            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
             color: #6c757d;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 2px solid #dee2e6;
         }
         
         table td {
             padding: 12px 16px;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid #eee;
             vertical-align: middle;
-            font-size: 14px;
         }
         
         table tr:hover td {
-            background: #f8fafc;
+            background: #f8f9fa;
         }
         
-        table .product-image-cell {
+        .product-image-cell {
             width: 50px;
             height: 50px;
-            border-radius: 8px;
             object-fit: cover;
-            background: #f8fafc;
+            border-radius: 6px;
+            background: #f8f9fa;
         }
         
-        table .product-name {
+        .product-name {
             font-weight: 600;
         }
         
-        table .product-price {
-            font-weight: 700;
+        .product-price {
             color: #2C3E8F;
+            font-weight: 700;
         }
         
-        table .stock-badge {
-            padding: 4px 12px;
+        .stock-badge {
+            padding: 3px 12px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
         }
         
         .stock-badge.in-stock {
-            background: #d1fae5;
-            color: #065f46;
+            background: #d4edda;
+            color: #155724;
         }
         
         .stock-badge.low-stock {
-            background: #fef3e7;
-            color: #b7791f;
+            background: #fff3cd;
+            color: #856404;
         }
         
         .stock-badge.out-of-stock {
-            background: #fee2e2;
-            color: #991b1b;
+            background: #f8d7da;
+            color: #721c24;
         }
         
         .action-buttons {
@@ -525,33 +340,59 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         }
         
         .empty-state i {
-            font-size: 64px;
-            color: #cbd5e0;
+            font-size: 48px;
+            color: #ccc;
             margin-bottom: 16px;
         }
         
         .empty-state h3 {
-            font-size: 20px;
-            color: #1a1a2e;
-            margin-bottom: 8px;
-        }
-        
-        .empty-state p {
             color: #6c757d;
         }
         
-        /* ============================================
-           RESPONSIVE
-           ============================================ */
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
         
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .modal-content .icon {
+            font-size: 48px;
+            color: #e74c3c;
+            margin-bottom: 16px;
+        }
+        
+        .modal-content .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
             .sidebar {
-                transform: translateX(-100%);
-                width: 280px;
-            }
-            
-            .sidebar.open {
-                transform: translateX(0);
+                display: none;
             }
             
             .main-content {
@@ -559,408 +400,210 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 padding: 16px;
             }
             
-            .menu-toggle {
-                display: block;
-            }
-            
-            .sidebar-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 999;
-            }
-            
-            .sidebar-overlay.active {
-                display: block;
-            }
-            
-            .topbar {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-            
             .table-header {
                 flex-direction: column;
                 align-items: stretch;
             }
             
-            .table-header .search-box {
+            .search-box input {
                 width: 100%;
-            }
-            
-            .table-header .search-box input {
-                flex: 1;
-                min-width: unset;
-            }
-            
-            table {
-                font-size: 13px;
-            }
-            
-            table td, table th {
-                padding: 8px 10px;
-            }
-            
-            .action-buttons .btn {
-                padding: 4px 8px;
-                font-size: 11px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            table .product-description-cell {
-                display: none;
-            }
-            
-            table .product-category-cell {
-                display: none;
             }
         }
     </style>
 </head>
 <body>
-    
-    <!-- ============================================
-         SIDEBAR OVERLAY (Mobile)
-         ============================================ -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    
-    <!-- ============================================
-         SIDEBAR
-         ============================================ -->
-    <aside class="sidebar" id="sidebar">
-        
-        <div class="sidebar-brand">
-            <i class="fas fa-store"></i>
-            <div>
-                <h2>My Shop</h2>
-                <small>Admin Panel</small>
-            </div>
-        </div>
-        
-        <nav class="sidebar-nav">
-            <div class="nav-section">Main</div>
-            <ul>
-                <li>
-                    <a href="dashboard.php">
-                        <i class="fas fa-home"></i> Dashboard
-                    </a>
-                </li>
-            </ul>
-            
-            <div class="nav-section" style="margin-top: 16px;">Management</div>
-            <ul>
-                <li>
-                    <a href="products.php" class="active">
-                        <i class="fas fa-box"></i> Products
-                    </a>
-                </li>
-                <li>
-                    <a href="categories.php">
-                        <i class="fas fa-tags"></i> Categories
-                    </a>
-                </li>
-                <li>
-                    <a href="orders.php">
-                        <i class="fas fa-shopping-bag"></i> Orders
-                    </a>
-                </li>
-            </ul>
-            
-            <div class="nav-section" style="margin-top: 16px;">Customers</div>
-            <ul>
-                <li>
-                    <a href="users.php">
-                        <i class="fas fa-users"></i> Users
-                    </a>
-                </li>
-            </ul>
-            
-            <div class="nav-section" style="margin-top: 16px;">Settings</div>
-            <ul>
-                <li>
-                    <a href="settings.php">
-                        <i class="fas fa-cog"></i> Settings
-                    </a>
-                </li>
-            </ul>
-        </nav>
-        
-        <div class="sidebar-footer">
-            <div class="admin-info">
-                <div class="avatar">
-                    <?php echo strtoupper(substr($_SESSION['user_name'] ?? 'A', 0, 1)); ?>
-                </div>
-                <div>
-                    <div class="admin-name"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Admin'); ?></div>
-                    <div class="admin-email"><?php echo htmlspecialchars($_SESSION['user_email'] ?? 'admin@myshop.com'); ?></div>
-                </div>
-            </div>
-            <a href="<?php echo SITE_URL; ?>logout.php" class="logout-btn">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-        </div>
-    </aside>
-    
-    <!-- ============================================
-         MAIN CONTENT
-         ============================================ -->
-    <main class="main-content">
-        
-        <!-- Top Bar -->
-        <div class="topbar">
-            <div class="topbar-left">
-                <button class="menu-toggle" id="menuToggle" aria-label="Toggle sidebar">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <div>
-                    <h1>Manage Products</h1>
-                    <div class="breadcrumb">
-                        <a href="dashboard.php" style="color:#2C3E8F;text-decoration:none;">Dashboard</a>
-                        / <span>Products</span>
-                    </div>
-                </div>
-            </div>
-            <div class="topbar-right">
-                <a href="product-add.php" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Add New Product
-                </a>
-            </div>
-        </div>
-        
-        <!-- Messages -->
-        <?php if ($successMessage): ?>
-            <div class="alert alert-success">
-                <i class="fas fa-check-circle"></i>
-                <?php echo htmlspecialchars($successMessage); ?>
-            </div>
-        <?php endif; ?>
-        
-        <?php if ($errorMessage): ?>
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-circle"></i>
-                <?php echo htmlspecialchars($errorMessage); ?>
-            </div>
-        <?php endif; ?>
-        
-        <!-- Products Table -->
-        <div class="table-container">
-            
-            <div class="table-header">
-                <h3>
-                    <i class="fas fa-box" style="color:#2C3E8F;"></i>
-                    All Products (<?php echo count($products); ?>)
-                </h3>
-                <div class="search-box">
-                    <input type="text" id="searchProducts" placeholder="Search products...">
-                    <button class="btn btn-primary btn-sm" onclick="searchProducts()">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <?php if (!empty($products)): ?>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Image</th>
-                            <th>Name</th>
-                            <th>Category</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($products as $product): ?>
-                            <tr>
-                                <td>
-                                    <?php 
-                                    $imagePath = !empty($product['image_url']) 
-                                        ? '../uploads/products/' . htmlspecialchars($product['image_url']) 
-                                        : '../assets/images/no-image.png';
-                                    ?>
-                                    <img src="<?php echo $imagePath; ?>" 
-                                         alt="<?php echo htmlspecialchars($product['name']); ?>"
-                                         class="product-image-cell"
-                                         onerror="this.src='../assets/images/no-image.png'">
-                                </td>
-                                <td>
-                                    <div class="product-name"><?php echo htmlspecialchars($product['name']); ?></div>
-                                    <div style="font-size:12px;color:#6c757d;">
-                                        <?php echo htmlspecialchars(substr($product['description'] ?? '', 0, 50)); ?>...
-                                    </div>
-                                </td>
-                                <td class="product-category-cell">
-                                    <?php echo htmlspecialchars($product['category_name'] ?? 'Uncategorized'); ?>
-                                </td>
-                                <td class="product-price">
-                                    $<?php echo number_format($product['price'], 2); ?>
-                                </td>
-                                <td>
-                                    <?php 
-                                    if ($product['stock_quantity'] <= 0) {
-                                        $class = 'out-of-stock';
-                                        $label = 'Out of Stock';
-                                    } elseif ($product['stock_quantity'] < 10) {
-                                        $class = 'low-stock';
-                                        $label = 'Low: ' . $product['stock_quantity'];
-                                    } else {
-                                        $class = 'in-stock';
-                                        $label = $product['stock_quantity'];
-                                    }
-                                    ?>
-                                    <span class="stock-badge <?php echo $class; ?>">
-                                        <?php echo $label; ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <a href="product-edit.php?id=<?php echo $product['id']; ?>" 
-                                           class="btn btn-warning btn-sm">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button class="btn btn-danger btn-sm delete-product" 
-                                                data-id="<?php echo $product['id']; ?>"
-                                                data-name="<?php echo htmlspecialchars($product['name']); ?>">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php else: ?>
-                <div class="empty-state">
-                    <i class="fas fa-box-open"></i>
-                    <h3>No Products Found</h3>
-                    <p>Start by adding your first product to the store.</p>
-                    <a href="product-add.php" class="btn btn-primary" style="margin-top:16px;">
-                        <i class="fas fa-plus"></i> Add Product
-                    </a>
-                </div>
-            <?php endif; ?>
-        </div>
-        
-    </main>
-    
-    <!-- ============================================
-         DELETE CONFIRMATION MODAL
-         ============================================ -->
-    <div id="deleteModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:2000;align-items:center;justify-content:center;">
-        <div style="background:white;padding:32px;border-radius:16px;max-width:400px;width:90%;text-align:center;">
-            <i class="fas fa-exclamation-triangle" style="font-size:48px;color:#e74c3c;margin-bottom:16px;"></i>
-            <h3 style="margin-bottom:8px;">Delete Product</h3>
-            <p style="color:#6c757d;margin-bottom:20px;">
-                Are you sure you want to delete <strong id="deleteProductName"></strong>?
-                This action cannot be undone.
-            </p>
-            <div style="display:flex;gap:12px;justify-content:center;">
-                <button class="btn btn-secondary" onclick="closeDeleteModal()" style="background:#e2e8f0;color:#1a1a2e;">
-                    Cancel
-                </button>
-                <form id="deleteForm" method="POST" action="product-delete.php">
-                    <input type="hidden" name="product_id" id="deleteProductId">
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
-                </form>
-            </div>
-        </div>
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <h2>My <span>Shop</span></h2>
+        <small style="color:rgba(255,255,255,0.5);">Admin Panel</small>
     </div>
     
-    <!-- ============================================
-         JAVASCRIPT
-         ============================================ -->
-    <script>
-        // ============================================
-        // SIDEBAR TOGGLE
-        // ============================================
-        
-        const menuToggle = document.getElementById('menuToggle');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-        
-        if (menuToggle) {
-            menuToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('open');
-                sidebarOverlay.classList.toggle('active');
-            });
-        }
-        
-        if (sidebarOverlay) {
-            sidebarOverlay.addEventListener('click', function() {
-                sidebar.classList.remove('open');
-                sidebarOverlay.classList.remove('active');
-            });
-        }
-        
-        // ============================================
-        // DELETE CONFIRMATION
-        // ============================================
-        
-        const deleteModal = document.getElementById('deleteModal');
-        const deleteProductId = document.getElementById('deleteProductId');
-        const deleteProductName = document.getElementById('deleteProductName');
-        
-        document.querySelectorAll('.delete-product').forEach(function(button) {
-            button.addEventListener('click', function() {
-                const id = this.getAttribute('data-id');
-                const name = this.getAttribute('data-name');
-                
-                deleteProductId.value = id;
-                deleteProductName.textContent = name;
-                deleteModal.style.display = 'flex';
-            });
-        });
-        
-        function closeDeleteModal() {
-            deleteModal.style.display = 'none';
-        }
-        
-        // Close modal on outside click
-        deleteModal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeDeleteModal();
-            }
-        });
-        
-        // ============================================
-        // SEARCH FUNCTIONALITY
-        // ============================================
-        
-        function searchProducts() {
-            const searchInput = document.getElementById('searchProducts');
-            const query = searchInput.value.toLowerCase();
-            const rows = document.querySelectorAll('table tbody tr');
-            
-            rows.forEach(function(row) {
-                const name = row.querySelector('.product-name')?.textContent?.toLowerCase() || '';
-                const category = row.querySelector('.product-category-cell')?.textContent?.toLowerCase() || '';
-                
-                if (name.includes(query) || category.includes(query)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-        
-        // Search on enter key
-        document.getElementById('searchProducts').addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') {
-                searchProducts();
-            }
-        });
-        
-        console.log('✅ Product management loaded successfully!');
-    </script>
+    <ul class="sidebar-menu">
+        <li><a href="dashboard.php"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li><a href="products.php" class="active"><i class="fas fa-box"></i> Products</a></li>
+        <li><a href="categories.php"><i class="fas fa-tags"></i> Categories</a></li>
+        <li><a href="orders.php"><i class="fas fa-shopping-bag"></i> Orders</a></li>
+        <li><a href="users.php"><i class="fas fa-users"></i> Users</a></li>
+        <li><a href="settings.php"><i class="fas fa-cog"></i> Settings</a></li>
+    </ul>
     
+    <div class="sidebar-footer">
+        <div class="admin-name"><?php echo htmlspecialchars($userName); ?></div>
+        <div class="admin-email"><?php echo htmlspecialchars($_SESSION['user_email'] ?? 'admin@myshop.com'); ?></div>
+        <a href="<?php echo SITE_URL; ?>logout.php" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main-content">
+    
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div>
+            <h1>Manage Products</h1>
+            <small style="color:#6c757d;">Dashboard / Products</small>
+        </div>
+        <a href="product-add.php" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Product
+        </a>
+    </div>
+    
+    <!-- Messages -->
+    <?php if ($successMsg): ?>
+        <div class="alert alert-success"><?php echo htmlspecialchars($successMsg); ?></div>
+    <?php endif; ?>
+    
+    <?php if ($errorMsg): ?>
+        <div class="alert alert-danger"><?php echo htmlspecialchars($errorMsg); ?></div>
+    <?php endif; ?>
+    
+    <?php if ($error): ?>
+        <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
+    <?php endif; ?>
+    
+    <!-- Products Table -->
+    <div class="table-container">
+        
+        <div class="table-header">
+            <h3><i class="fas fa-box"></i> All Products (<?php echo count($products); ?>)</h3>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search products..." onkeyup="searchTable()">
+            </div>
+        </div>
+        
+        <?php if (!empty($products)): ?>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <?php foreach ($products as $p): ?>
+                        <tr>
+                            <td>
+                                <img src="<?php 
+                                    echo !empty($p['image_url']) 
+                                        ? '../uploads/products/' . htmlspecialchars($p['image_url']) 
+                                        : '../assets/images/no-image.png'; 
+                                ?>" 
+                                     class="product-image-cell"
+                                     onerror="this.src='../assets/images/no-image.png'">
+                            </td>
+                            <td>
+                                <div class="product-name"><?php echo htmlspecialchars($p['name']); ?></div>
+                                <div style="font-size:12px;color:#6c757d;">
+                                    <?php echo htmlspecialchars(substr($p['description'] ?? '', 0, 40)); ?>
+                                </div>
+                            </td>
+                            <td><?php echo htmlspecialchars($p['category_name'] ?? 'Uncategorized'); ?></td>
+                            <td class="product-price">$<?php echo number_format($p['price'], 2); ?></td>
+                            <td>
+                                <?php 
+                                if ($p['stock_quantity'] <= 0) {
+                                    $cls = 'out-of-stock';
+                                    $txt = 'Out of Stock';
+                                } elseif ($p['stock_quantity'] < 10) {
+                                    $cls = 'low-stock';
+                                    $txt = 'Low: ' . $p['stock_quantity'];
+                                } else {
+                                    $cls = 'in-stock';
+                                    $txt = $p['stock_quantity'];
+                                }
+                                ?>
+                                <span class="stock-badge <?php echo $cls; ?>"><?php echo $txt; ?></span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="product-edit.php?id=<?php echo $p['id']; ?>" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn btn-danger btn-sm delete-btn" 
+                                            data-id="<?php echo $p['id']; ?>"
+                                            data-name="<?php echo htmlspecialchars($p['name']); ?>">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php else: ?>
+            <div class="empty-state">
+                <i class="fas fa-box-open"></i>
+                <h3>No Products Found</h3>
+                <p style="color:#6c757d;">Start by adding your first product.</p>
+                <a href="product-add.php" class="btn btn-primary" style="margin-top:16px;">
+                    <i class="fas fa-plus"></i> Add Product
+                </a>
+            </div>
+        <?php endif; ?>
+        
+    </div>
+    
+</div>
+
+<!-- ===== DELETE MODAL ===== -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-content">
+        <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <h3>Delete Product</h3>
+        <p>Are you sure you want to delete <strong id="deleteName"></strong>? This cannot be undone.</p>
+        <div class="btn-group">
+            <button class="btn" style="background:#e2e8f0;color:#1a1a2e;" onclick="closeModal()">Cancel</button>
+            <form method="POST" action="product-delete.php">
+                <input type="hidden" name="product_id" id="deleteId">
+                <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+// Search
+function searchTable() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const rows = document.querySelectorAll('#tableBody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(filter) ? '' : 'none';
+    });
+}
+
+// Delete Modal
+const modal = document.getElementById('deleteModal');
+const deleteId = document.getElementById('deleteId');
+const deleteName = document.getElementById('deleteName');
+
+document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        deleteId.value = this.dataset.id;
+        deleteName.textContent = this.dataset.name;
+        modal.classList.add('active');
+    });
+});
+
+function closeModal() {
+    modal.classList.remove('active');
+}
+
+modal.addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+console.log('✅ Admin products page loaded');
+</script>
+
 </body>
 </html>

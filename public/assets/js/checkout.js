@@ -98,9 +98,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const value = postalCode.value.trim();
         postalCode.classList.remove('is-invalid', 'is-valid');
         
-        if (!/^[0-9]{5,10}$/.test(value)) {
+        if (!/^(\d{5}(-\d{4})?|[A-Za-z0-9][A-Za-z0-9 -]{2,12})$/.test(value)) {
             postalCode.classList.add('is-invalid');
-            showFieldError(postalCode, 'Please enter a valid postal code (5-10 digits).');
+            showFieldError(postalCode, 'Please enter a valid postal code.');
             return false;
         }
         

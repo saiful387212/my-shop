@@ -1015,3 +1015,58 @@ img {
    9. RESPONSIVE BREAKPOINTS
    (See responsive.css for mobile styles)
    ============================================ */
+   /* ============================================
+   EMAIL NOTICE STYLES
+   ============================================ */
+
+.email-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    max-width: 700px;
+    margin: 24px auto 0;
+    padding: 20px 24px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #eef2f7;
+}
+
+.email-notice.email-sent {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.email-notice.email-pending {
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+
+.email-icon {
+    flex-shrink: 0;
+    font-size: 28px;
+    padding-top: 2px;
+}
+
+.email-message p {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    color: #1a1a2e;
+}
+
+.email-message small {
+    font-size: 13px;
+    color: #6c757d;
+}
+
+@media (max-width: 480px) {
+    .email-notice {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 16px 20px;
+    }
+    
+    .email-icon {
+        font-size: 32px;
+    }
+}

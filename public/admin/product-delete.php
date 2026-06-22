@@ -1,19 +1,13 @@
 <?php
 // ============================================================
 // FILE: public/admin/product-delete.php
-// PURPOSE: Delete a product from the database
+// PURPOSE: Delete a product with foreign key handling
 // ============================================================
 
-// Define the absolute path
 define('ABSPATH', realpath(dirname(__DIR__, 2)) . DIRECTORY_SEPARATOR);
 
-// Load configuration
 require_once ABSPATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php';
-
-// Load database connection
 require_once ABSPATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'database.php';
-
-// Load helper functions
 require_once ABSPATH . 'app' . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'functions.php';
 
 // Start session
@@ -44,7 +38,7 @@ if ($productId <= 0) {
 }
 
 // ============================================
-// DELETE PRODUCT
+// DELETE PRODUCT WITH FOREIGN KEY HANDLING
 // ============================================
 
 try {
@@ -54,17 +48,50 @@ try {
         throw new Exception('Database connection failed.');
     }
     
-    // Get product image path first
+    // ============================================
+    // STEP 1: Check if product has order items
+    // ============================================
+    $stmt = $pdo->prepare('
+        SELECT COUNT(*) as count FROM order_items WHERE product_id = :product_id
+    ');
+    $stmt->execute(['product_id' => $productId]);
+    $orderCount = $stmt->fetch()['count'] ?? 0;
+    
+    // ============================================
+    // STEP 2: Get product image path
+    // ============================================
     $stmt = $pdo->prepare('SELECT image_url FROM products WHERE id = :id');
     $stmt->execute(['id' => $productId]);
     $product = $stmt->fetch();
     
-    // Delete the product
+    // ============================================
+    // STEP 3: Start transaction
+    // ============================================
+    $pdo->beginTransaction();
+    
+    // ============================================
+    // STEP 4: Delete order items (if any)
+    // ============================================
+    if ($orderCount > 0) {
+        $stmt = $pdo->prepare('
+            DELETE FROM order_items WHERE product_id = :product_id
+        ');
+        $stmt->execute(['product_id' => $productId]);
+        
+        // Also check vendor_orders if exists
+        // This is optional - depends on your structure
+    }
+    
+    // ============================================
+    // STEP 5: Delete the product
+    // ============================================
     $stmt = $pdo->prepare('DELETE FROM products WHERE id = :id');
     $result = $stmt->execute(['id' => $productId]);
     
     if ($result) {
-        // Delete image file if exists
+        // ============================================
+        // STEP 6: Delete image file if exists
+        // ============================================
         if ($product && $product['image_url']) {
             $imagePath = ABSPATH . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'products' . DIRECTORY_SEPARATOR . $product['image_url'];
             if (file_exists($imagePath)) {
@@ -72,15 +99,33 @@ try {
             }
         }
         
+        // ============================================
+        // STEP 7: Commit transaction
+        // ============================================
+        $pdo->commit();
+        
         $_SESSION['success_message'] = 'Product deleted successfully!';
     } else {
+        $pdo->rollBack();
         $_SESSION['error_message'] = 'Failed to delete product.';
     }
     
 } catch (PDOException $e) {
-    error_log('Delete product error: ' . $e->getMessage());
-    $_SESSION['error_message'] = 'Database error occurred.';
+    if (isset($pdo)) {
+        $pdo->rollBack();
+    }
+    
+    // Check if it's a foreign key constraint error
+    if ($e->getCode() == 23000) {
+        $_SESSION['error_message'] = 'Cannot delete this product because it has order items. Please delete the order items first.';
+    } else {
+        error_log('Delete product error: ' . $e->getMessage());
+        $_SESSION['error_message'] = 'Database error occurred.';
+    }
 } catch (Exception $e) {
+    if (isset($pdo)) {
+        $pdo->rollBack();
+    }
     error_log('Delete product error: ' . $e->getMessage());
     $_SESSION['error_message'] = 'An error occurred.';
 }

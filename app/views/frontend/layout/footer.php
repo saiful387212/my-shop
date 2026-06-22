@@ -41,10 +41,17 @@ if (!defined('ABSPATH')) {
                 <p>&copy; <?php echo date('Y'); ?> My Shop. All rights reserved.</p>
             </div>
         </div>
+        
     </footer>
     
     <script src="<?php echo SITE_URL; ?>assets/js/script.js"></script>
     <script src="<?php echo SITE_URL; ?>assets/js/login.js"></script>
+    <!-- At the very bottom, before </body> -->
+<script src="<?php echo SITE_URL; ?>assets/js/cart.js"></script>
+<script>
+    console.log('✅ Footer loaded - Cart.js should be loaded');
+</script>
+<script src="<?php echo SITE_URL; ?>assets/js/cart.js"></script>
 </body>
 </html>
 <!-- In app/views/frontend/layout/footer.php -->

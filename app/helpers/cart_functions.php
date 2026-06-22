@@ -1,16 +1,12 @@
 <?php
 // ============================================================
 // FILE: app/helpers/cart_functions.php
-// PURPOSE: Shopping cart helper functions
 // ============================================================
 
 if (!defined('ABSPATH')) {
     die('Direct access not allowed.');
 }
 
-/**
- * Get cart items from session
- */
 function getCartItems() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -18,9 +14,6 @@ function getCartItems() {
     return isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
 }
 
-/**
- * Save cart items to session
- */
 function saveCartItems($cart) {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -28,9 +21,6 @@ function saveCartItems($cart) {
     $_SESSION['cart'] = $cart;
 }
 
-/**
- * Get total number of items in cart
- */
 function getCartTotalItems() {
     $cart = getCartItems();
     $total = 0;
@@ -40,9 +30,6 @@ function getCartTotalItems() {
     return $total;
 }
 
-/**
- * Get cart subtotal
- */
 function getCartSubtotal() {
     $cart = getCartItems();
     $subtotal = 0;
@@ -52,9 +39,6 @@ function getCartSubtotal() {
     return $subtotal;
 }
 
-/**
- * Add item to cart
- */
 function addToCart($productId, $productName, $productPrice, $productImage = null) {
     $cart = getCartItems();
     
@@ -74,27 +58,18 @@ function addToCart($productId, $productName, $productPrice, $productImage = null
     return true;
 }
 
-/**
- * Remove item from cart
- */
 function removeFromCart($productId) {
     $cart = getCartItems();
-    
     if (isset($cart[$productId])) {
         unset($cart[$productId]);
         saveCartItems($cart);
         return true;
     }
-    
     return false;
 }
 
-/**
- * Update item quantity
- */
 function updateCartQuantity($productId, $quantity) {
     $cart = getCartItems();
-    
     if (isset($cart[$productId])) {
         if ($quantity <= 0) {
             unset($cart[$productId]);
@@ -104,13 +79,9 @@ function updateCartQuantity($productId, $quantity) {
         saveCartItems($cart);
         return true;
     }
-    
     return false;
 }
 
-/**
- * Clear entire cart
- */
 function clearCart() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -118,3 +89,12 @@ function clearCart() {
     $_SESSION['cart'] = [];
     return true;
 }
+
+function getItemSubtotal($productId) {
+    $cart = getCartItems();
+    if (isset($cart[$productId])) {
+        return $cart[$productId]['price'] * $cart[$productId]['quantity'];
+    }
+    return 0;
+}
+?>
